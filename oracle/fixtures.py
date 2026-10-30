@@ -89,6 +89,24 @@ CYCLE = Fixture(
     ),
 )
 
+# F5: input that is legal but not self-consistent. A rule companion with no
+# assertion (r_orphan) and an assertion in a world nobody declared (ghost).
+# Upstream derives holds_via_rule(asserted, p, base, ...) but no holds(p, _),
+# and nothing from ghost. A native fixpoint must not let either propagate.
+GATES = Fixture(
+    "F5-gates",
+    tuple(
+        _worlds("base", "a")
+        + [
+            ("accessible", "a", "base"),
+            ("asserts_rule", "base", "p", "r_orphan"),
+            ("accessible", "a", "ghost"),
+            ("asserts", "ghost", "h"),
+            ("asserts_rule", "ghost", "h", "r_ghost"),
+        ]
+    ),
+)
+
 # F3: even negative cycle over asserts/2 (legal upstream: asserts is
 # cwa=false, safe_negation). Two stable models; brave != cautious.
 NAF = Fixture(
