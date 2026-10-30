@@ -209,3 +209,22 @@ def test_xlog_join_answer_and_qualification():
     assert "ans(curated,2)" not in over.cautious and "ans(src,2)" in over.cautious
     # An absent premise is unknown, not false.
     assert truth("holds(s(3,4),src)", plain.models) is Truth.UNKNOWN
+
+
+def test_partially_attributed_diamond_is_refused():
+    # b asserts p as a bare fact (no asserts_rule): d inherits p via a
+    # (attributed, r_base_p) and via b (unattributed). Returning only the
+    # attributed path would understate the evidence set.
+    from fixtures import Fixture
+    fx = Fixture("F4-partial", tuple(
+        [("world", w) for w in ("base", "a", "b", "d")] + [
+            ("asserts", "base", "p"), ("asserts_rule", "base", "p", "r_base_p"),
+            ("accessible", "a", "base"), ("accessible", "b", "base"),
+            ("asserts", "b", "p"),
+            ("accessible", "d", "a"), ("accessible", "d", "b"),
+        ]))
+    atoms = solve(fx).models[0]
+    assert "holds_via(inherited(b),p,d)" in atoms
+    assert "holds_via_rule(inherited(a),p,d,r_kripke_inherit,r_base_p)" in atoms
+    with pytest.raises(MissingProvenance):
+        qualified(atoms, "p", "d")

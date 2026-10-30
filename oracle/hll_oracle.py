@@ -14,14 +14,14 @@ from pathlib import Path
 import clingo
 
 from clingo_oracle import OracleResult
-from witness import UPSTREAM_COMMIT, Witness, load_kripke_rules, upstream_root
+from witness import UPSTREAM_COMMIT, Witness, load_kripke_rules, require_pinned_compiler
 
 HLL_DIR = Path(__file__).parent / "hll"
 
 
 def compile_fixture(name: str) -> tuple[str, str]:
     """Compile hll/<name>.hll. Returns (ASP text, sha256 of that text)."""
-    root = str(upstream_root())
+    root = str(require_pinned_compiler())
     if root not in sys.path:
         sys.path.insert(0, root)
     from mistaber.dsl.compiler import compile_hll_file  # noqa: E402

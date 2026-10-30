@@ -48,6 +48,34 @@ def upstream_root() -> Path:
     return Path(root)
 
 
+# Upstream files whose behaviour the HLL front end depends on.
+COMPILER_PATHS = ("mistaber/dsl/compiler", "mistaber/dsl/grammar.lark")
+
+
+def require_pinned_compiler() -> Path:
+    """Refuse unless MISTABER_UPSTREAM is a git checkout whose HEAD is the
+    pinned commit and whose compiler files have no working-tree changes.
+    Hashing the compiler's OUTPUT does not establish which compiler ran."""
+    import subprocess
+
+    root = upstream_root()
+
+    def git(*args: str) -> str:
+        try:
+            return subprocess.run(["git", "-C", str(root), *args], check=True,
+                                  capture_output=True, text=True).stdout.strip()
+        except (OSError, subprocess.CalledProcessError) as e:
+            raise StaleWitness(f"{root}: not a usable git checkout ({e})") from e
+
+    head = git("rev-parse", "HEAD")
+    if head != UPSTREAM_COMMIT:
+        raise StaleWitness(f"{root}: HEAD {head} != pinned {UPSTREAM_COMMIT}")
+    dirty = git("status", "--porcelain", "--", *COMPILER_PATHS)
+    if dirty:
+        raise StaleWitness(f"{root}: compiler has local changes:\n{dirty}")
+    return root
+
+
 def load_kripke_rules(expected_sha256: str = KRIPKE_LP_SHA256) -> tuple[str, str]:
     """Return (program text, sha256). Refuse if the bytes are not the pin."""
     data = (upstream_root() / KRIPKE_LP_PATH).read_bytes()

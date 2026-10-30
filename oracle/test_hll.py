@@ -25,6 +25,7 @@ from clingo_oracle import solve  # noqa: E402
 from fixtures import MODES  # noqa: E402
 from hll_oracle import compile_fixture, solve_hll  # noqa: E402
 from qualify import MissingProvenance, Truth, qualified, truth  # noqa: E402
+from witness import StaleWitness  # noqa: E402
 
 
 def test_compiled_text_has_world_structure_and_endorse_companion():
@@ -78,3 +79,19 @@ def test_compiled_sha_is_deterministic():
     assert t1 == t2 and s1 == s2
     assert solve_hll("modes").witness.fixture_sha256 == s1
     assert solve_hll("modes").witness.fixture_id == "hll-modes"
+
+
+def test_compiler_must_be_the_pinned_clean_checkout(tmp_path, monkeypatch):
+    import os
+    import witness
+    real = os.environ["MISTABER_UPSTREAM"]
+    witness.require_pinned_compiler()  # the real pinned checkout passes
+    # A directory that is not the pinned git checkout is refused.
+    monkeypatch.setenv("MISTABER_UPSTREAM", str(tmp_path))
+    with pytest.raises(StaleWitness):
+        witness.require_pinned_compiler()
+    # A pinned commit that differs from HEAD is refused.
+    monkeypatch.setenv("MISTABER_UPSTREAM", real)
+    monkeypatch.setattr(witness, "UPSTREAM_COMMIT", "0" * 40)
+    with pytest.raises(StaleWitness):
+        witness.require_pinned_compiler()

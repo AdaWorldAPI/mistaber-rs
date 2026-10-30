@@ -77,8 +77,18 @@ def qualified(atoms: frozenset[str], prop: str, world: str) -> list[QualifiedHol
         mode, p, w, imm, src = _split_args(m.group(1))
         if p == prop and w == world:
             out.append(QualifiedHolding(p, w, mode, imm, src))
-    if not out and f"holds({prop},{world})" in atoms:
-        raise MissingProvenance(f"holds({prop},{world}) has no holds_via_rule/5")
+    # Every observed holding mode must be attributed. A partial list would
+    # understate the evidence set (one diamond path attributed, one not).
+    modes = set()
+    for a in atoms:
+        if a.startswith("holds_via(") and a.endswith(")"):
+            mode, p, w = _split_args(a[len("holds_via("):-1])
+            if p == prop and w == world:
+                modes.add(mode)
+    uncovered = modes - {h.holding_mode for h in out}
+    if uncovered:
+        raise MissingProvenance(
+            f"holds({prop},{world}): no holds_via_rule/5 for modes {sorted(uncovered)}")
     return sorted(out, key=lambda h: (h.holding_mode, h.source_rule))
 
 
