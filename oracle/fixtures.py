@@ -107,6 +107,21 @@ GATES = Fixture(
     ),
 )
 
+# F6: inheritance INTO a world nobody declared. Upstream's inherited rule has
+# no world(W_child) condition, so p holds in x although world(x) is absent.
+# The mirror of F5, whose undeclared world is a parent.
+UNDECLARED_CHILD = Fixture(
+    "F6-undeclared-child",
+    tuple(
+        _worlds("base")
+        + [
+            ("asserts", "base", "p"),
+            ("asserts_rule", "base", "p", "r_base_p"),
+            ("accessible", "x", "base"),
+        ]
+    ),
+)
+
 # F3: even negative cycle over asserts/2 (legal upstream: asserts is
 # cwa=false, safe_negation). Two stable models; brave != cautious.
 NAF = Fixture(
