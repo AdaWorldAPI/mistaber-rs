@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from clingo_oracle import KRIPKE_PREDICATES, solve  # noqa: E402
-from fixtures import CYCLE, MODES, MODES_REVERSED, NAF, Fixture, mammal, xlog_join  # noqa: E402
+from fixtures import CYCLE, GATES, MODES, MODES_REVERSED, NAF, Fixture, mammal, xlog_join  # noqa: E402
 from witness import require_pinned_compiler  # noqa: E402
 
 # Predicates the Kripke rules read. A fixture rule that derives one of these
@@ -34,7 +34,7 @@ KRIPKE_INPUTS = frozenset({
 })
 
 EXPORTED = (
-    MODES, MODES_REVERSED, CYCLE,
+    MODES, MODES_REVERSED, CYCLE, GATES,
     mammal("C2"), mammal("C4"), mammal("C6"), mammal("C6i"),
     xlog_join(False), xlog_join(True),
 )
