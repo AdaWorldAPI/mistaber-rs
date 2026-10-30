@@ -34,4 +34,8 @@ Mistaber upstream reports Apache-2.0 for code, with separate trademark restricti
 - [Semantic differential oracle and falsifiers](.claude/plans/MIST-EPI5-0.md)
 - [Agent/session ownership and exclusions](AGENTS.md)
 
-**Status:** documents only. No Rust crate, no Clingo replacement, no modified upstream sources, no runtime implementation, no production admission.
+- [D-MIST-RUFF-XLOG-0: harvest inventory, oracle results, decision](docs/D-MIST-RUFF-XLOG-0.md)
+
+**Status:** documents plus a Python reference oracle (`oracle/`: Clingo over the pinned upstream `kripke_rules.lp`, and an independent scalar interpreter). No Rust crate, no Clingo replacement, no modified or vendored upstream sources, no runtime implementation, no production admission.
+
+Run the oracle: `pip install clingo pytest` then `MISTABER_UPSTREAM=<BrainyBlaze/mistaber checkout at b50bf33> pytest oracle/`.
