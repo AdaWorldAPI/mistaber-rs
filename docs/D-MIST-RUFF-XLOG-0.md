@@ -75,7 +75,7 @@ codegen was added to this repo.
   interpretation, holding_mode, immediate_rule, source_rule)`; counts
   evidence origins through an explicit lineage map; typed refusals.
 
-Run: `MISTABER_UPSTREAM=<checkout@b50bf33> pytest oracle/` → **26 passed**.
+Run: `MISTABER_UPSTREAM=<checkout@b50bf33> pytest oracle/` → **32 passed** (26 fact-fixture tests + 6 HLL tests).
 
 ### Results
 
@@ -97,6 +97,27 @@ Run: `MISTABER_UPSTREAM=<checkout@b50bf33> pytest oracle/` → **26 passed**.
 | Stale `.lp` sha / different fixture witness | `StaleWitness`. |
 | XLOG `R(1,Y),S(Y,4)` | `{Y=2}` in `src`, and in `curated` via inheritance with source rule `r_R_0`; `override(curated, r(1,2), _)` removes it in `curated` only; `holds(s(3,4),src)` is UNKNOWN. |
 
+### HLL-authored fixture (`oracle/hll/modes.hll`, compiled by the upstream emitter)
+
+F1 rewritten in HLL (`@world_def`, `@rule`/`@makor`, `@endorses`) and compiled
+with `compile_hll_file`; the compiled text is deterministic (same sha twice).
+
+- `holds/2` and `holds_via/3` equal the hand-written F1 fixture exactly. Rule
+  ids differ only by name (`@endorses` synthesizes `r_endorse_b_0`).
+- **The provenance gap is reachable from real HLL.** Inside an `@rule` block,
+  `asserts(base, p) :- world(base).` gets `asserts_rule(base, p, r_base_p)`,
+  but the fact `asserts(base, g).` gets nothing: `emitter.py` emits facts at
+  lines 269-271, and adds `*_rule` companions only inside the rules loop
+  (lines 280-304). At runtime `g` holds in every descendant with no
+  `holds_via_rule/5`.
+- **Block-scoped attribution is coarser than per-proposition.** An `@rule`
+  block attributes every following rule to its id. `rema.hll:44-54`:
+  block `r_rema_bb_of_achiila` with `madrega(d_rabanan)` owns
+  `issur(achiila, …)`, `heter(bishul, …)` and `heter(hanaah, …)`, so both
+  permissions carry a prohibition's rule id and severity. For independence
+  counting this is harmless (one origin); for per-proposition provenance or
+  severity it is wrong. Source-verified; not reported upstream.
+
 ### Disable runs (committed first, restored with `git checkout`)
 
 | Disabled guard | Result |
@@ -105,6 +126,8 @@ Run: `MISTABER_UPSTREAM=<checkout@b50bf33> pytest oracle/` → **26 passed**.
 | scalar override check | 2 failed (parity broke) |
 | witness keyed on row order | 3 failed |
 | absence read as FALSE | 2 failed |
+| HLL: `g` written in rule form | 1 failed (the gap test: the gap is specific to the fact form) |
+| HLL: `@endorses` removed | 3 failed |
 | lineage dedupe (in-suite, monkeypatched) | counts 2 where 1 is right; asserted by `test_disabling_lineage_dedupe_is_detected` |
 
 ### Taxonomy vs authority (the explicit translation)
@@ -192,10 +215,16 @@ position-order witness. Asked on EXO-50 (§8).
 
 ## 9. Not done
 
-- No Python HLL fixture was compiled through the upstream compiler; fixtures
-  are fact sets run against the generated `.lp`. HLL-authored fixtures
-  (`@world_def`, `@endorses`) would also exercise the emitter.
+- Only F1 has an HLL twin; the mammal and XLOG fixtures are still fact sets.
 - No CE64 or Epi5 code was read beyond the architecture doc.
 - No timing; no mask fold implemented.
 - 0/1/63/64/65 focus-position boundaries (MIST-EPI5-0 task 11) not tested;
   they need the native fold, which is deferred.
+
+## 10. Agent runs (model policy: Haiku grindwork, Sonnet drafting, Opus planning/review)
+
+| Run | Card | Checked by orchestrator | Wrong | Missed |
+| --- | --- | --- | --- | --- |
+| Quote emitter/parser/grammar | Haiku `quote-harvester` | `emitter.py:269-272, 280-288`, `grammar.lark:25-26` re-read | 0 | 0 |
+| Census of `*_rule` producers | Haiku `harvest-scout` | `endorses_rule` count re-run (28 = 28); `rema.lp` hits read at source | 0 | lists capped at 60 by brief |
+| Draft HLL fixture + tests | Sonnet | files read in full, suite re-run (32 passed), 2 disable runs | 0 | 0 |
