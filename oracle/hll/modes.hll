@@ -1,0 +1,26 @@
+% Domain-neutral HLL mirror of fixture F1 (oracle/fixtures.py MODES).
+% Grammar notes: @world is once per file; makor sources are IDENTIFIER("STRING")
+% calls, so neutral citations are written fixture("F1").
+
+@world_def(base)
+@world_def(a, base)
+@world_def(b, base)
+@world_def(c, base)
+@world_def(d, [a, b])
+@world_def(e, d)
+
+@world(base)
+
+% RULE form: emitter adds asserts_rule(base, p, r_base_p) :- world(base).
+@rule(r_base_p)
+@makor([fixture("F1")])
+asserts(base, p) :- world(base).
+
+% FACT form: the hypothesis case (no asserts_rule companion expected).
+@rule(r_base_g)
+@makor([fixture("F1")])
+asserts(base, g).
+
+@endorses(b, p, makor=[fixture("F1")])
+
+override(c, p, q).
